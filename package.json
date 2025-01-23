@@ -1,0 +1,20 @@
+{
+  "name": "arcane",
+  "version": "1.0.0",
+  "description": "Internet client for playing multiplayer LAN games",
+  "homepage": "https://github.com/StevenDay83/arcane#readme",
+  "bugs": {
+    "url": "https://github.com/StevenDay83/arcane/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StevenDay83/arcane.git"
+  },
+  "license": "MIT",
+  "author": "Steven Day",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
