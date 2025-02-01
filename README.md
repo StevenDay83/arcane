@@ -1,2 +1,2 @@
 # arcane
-Internet client for playing LAN games with others on the Internet
+Internet client for playing multiplayer LAN games
