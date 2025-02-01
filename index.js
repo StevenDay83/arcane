@@ -16,6 +16,6 @@ myProfile.updateProfileField('name', "ArcanePlayer");
 myProfile.updateProfileField('about', "Arcane Test Profile");
 
 
-console.log(JSON.stringify(myProfile.generateEvent(mySK),undefined,4));
+// console.log(JSON.stringify(myProfile.generateEvent(mySK),undefined,4));
 
 testStart();

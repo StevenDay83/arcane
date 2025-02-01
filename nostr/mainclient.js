@@ -2,14 +2,72 @@ var {finalizeEvent, generateSecretKey, getPublicKey } = require('nostr-tools/pur
 var { Relay } = require('nostr-tools/relay');
 var { SimplePool } = require('nostr-tools/pool');
 var { URL } = require('url');
-const BootStrapRelays = ['wss://relay.damus.io', 'wss://relay.primal.net', 'wss://nos.lol', 'wss://bitcoiner.social/'];
+const BootStrapRelays = ['wss://relay.damus.io/', 'wss://relay.primal.net/', 'wss://nos.lol/', 'wss://bitcoiner.social/'];
 
 class NostrConnectionClient {
     constructor(relayList){
         this.localRelays = BootStrapRelays;
+        this.relayPool = new SimplePool();
+        this.relayQueries = {};
+        this.queryListeners = {};
     }
 
+    addRelayQuery(queryName, query = {}, reconnect,relayList = this.localRelays){
+        if (queryName && typeof queryName === 'string') {
+            this.relayQueries[queryName] = this.relayPool.subscribeMany(
+                relayList,query,
+                {
+                    onevent(newEvent) {
+                        void(0); // _handleEvent(newEvent, queryName);
+                    },
+                    oneose() {
 
+                    },
+                    onclose(){
+                        if (reconnect){
+                            var that = this;
+                            setTimeout(that.addRelayQuery(queryName, query, reconnect, relayList), 10000);
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    removeRelayQuery(queryName){
+        if (queryName && typeof queryName === 'string'){
+            var subscriberQuery = this.relayQueries[queryName];
+
+            if (subscriberQuery){
+                subscriberQuery.close();
+                delete this.relayQueries[queryName];
+            }
+        }
+    }
+
+    addListenerToQuery(queryName, listenerFunction){
+        if (queryName && typeof queryName === 'string' && listenerFunction && typeof listenerFunction === 'function'){
+            if (this.queryListeners[queryName] && Array.isArray(this.queryListeners[queryName])) {
+                this.queryListeners[queryName].push(listenerFunction);
+            } else {
+                this.queryListeners[queryName] = [listenerFunction];
+            }
+        }
+    }
+
+    removeListenerFromQuery(queryName, listenerFunction){
+        if (queryName && typeof queryName === 'string' && listenerFunction && typeof listenerFunction === 'function'){
+            if (this.queryListeners[queryName] && Array.isArray(this.queryListeners[queryName])) {
+                this.queryListeners[queryName].splice(this.queryListeners[queryName].indexOf(listenerFunction), 1);
+            }
+        }
+    }
+
+    clearListenersFromQuery(queryName) {
+        if (queryName && typeof queryName === 'string'){
+            delete this.queryListeners[queryName];
+        }
+    }
 
     addRelaysToList(relayList, clearBootStrap = true){
         clearBootStrap ? this.localRelays = [] : void(0);
@@ -74,6 +132,10 @@ async function testStart() {
             }
         );
 
+        // var thisEvents = await relayPool.querySync(BootStrapRelays, {kinds:[1], limit:10});
+
+        // console.log(thisEvents);
+
         relayPool.subscribeMany(
             BootStrapRelays,
             [
@@ -88,7 +150,6 @@ async function testStart() {
                 }
             }
         );
-
 
 /*
 
