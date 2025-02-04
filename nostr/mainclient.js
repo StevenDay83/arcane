@@ -1,5 +1,5 @@
 var {finalizeEvent, generateSecretKey, getPublicKey } = require('nostr-tools/pure');
-var { Relay } = require('nostr-tools/relay');
+var { verifyEvent } = require('nostr-tools/pure');
 var { SimplePool } = require('nostr-tools/pool');
 var { URL } = require('url');
 const BootStrapRelays = ['wss://relay.damus.io/', 'wss://relay.primal.net/', 'wss://nos.lol/', 'wss://bitcoiner.social/'];
@@ -12,13 +12,19 @@ class NostrConnectionClient {
         this.queryListeners = {};
     }
 
-    addRelayQuery(queryName, query = {}, reconnect,relayList = this.localRelays){
+    addRelayQuery(queryName, query = [{}], reconnect,relayList = this.localRelays){
         if (queryName && typeof queryName === 'string') {
+            var that = this;
             this.relayQueries[queryName] = this.relayPool.subscribeMany(
                 relayList,query,
                 {
-                    onevent(newEvent) {
-                        void(0); // _handleEvent(newEvent, queryName);
+                    onevent (newEvent) {
+                        // void(0);
+                        try {
+                            that._handleMessage(newEvent, queryName);
+                        } catch (err){
+                            void(0);
+                        }
                     },
                     oneose() {
 
@@ -41,6 +47,18 @@ class NostrConnectionClient {
             if (subscriberQuery){
                 subscriberQuery.close();
                 delete this.relayQueries[queryName];
+            }
+        }
+    }
+
+    _handleMessage(newEvent, queryName){
+        if (verifyEvent(newEvent) && queryName){
+            var queryFunctions = this.queryListeners[queryName];
+
+            if (queryFunctions && Array.isArray(queryFunctions)){
+                for (var i = 0; i < queryFunctions.length; i++){
+                    queryFunctions[i](newEvent, queryName);
+                }
             }
         }
     }
@@ -180,5 +198,5 @@ let h = pool.subscribeMany(
 }
 
 
-// module.exports = NostrConnectionClient;
-module.exports.testStart = testStart;
+module.exports = NostrConnectionClient;
+// module.exports.testStart = testStart;

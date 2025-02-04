@@ -1,4 +1,4 @@
-var {testStart} = require('./nostr/mainclient');
+var NostrClientConn = require('./nostr/mainclient');
 var NostrIdentity = require('./nostr/identity.js');
 const { generateSecretKey, getPublicKey } = require('nostr-tools/pure');
 const { test } = require('nostr-tools/nip21');
@@ -16,6 +16,20 @@ myProfile.updateProfileField('name', "ArcanePlayer");
 myProfile.updateProfileField('about', "Arcane Test Profile");
 
 
-// console.log(JSON.stringify(myProfile.generateEvent(mySK),undefined,4));
+var nClient = new NostrClientConn();
 
-testStart();
+var listenerMap = {
+    "kind1": (newEvent, queryName) => {
+        console.log(JSON.stringify(newEvent));
+    },
+    "kind42": (newEvent) => {
+        // console.log("Chat:", JSON.stringify(newEvent, undefined, 4));
+        console.log(newEvent.pubkey + ':' + newEvent.content);
+    }
+};
+
+nClient.addListenerToQuery("kind1", listenerMap["kind1"]);
+nClient.addListenerToQuery("kind42", listenerMap['kind42']);
+
+// nClient.addRelayQuery("kind1", [{kinds:[1], limit:1}], false);
+nClient.addRelayQuery("kind42", [{kinds:[42], limit:100}], false);
